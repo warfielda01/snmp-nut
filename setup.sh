@@ -8,15 +8,12 @@ generate_password() {
 # Function to install required packages from requirements.txt
 install_requirements() {
     if [ -f "requirements.txt" ]; then
-        sudo apt update
         sudo apt install $(cat requirements.txt)
     else
         echo "Error: requirements.txt not found."
         exit 1
     fi
 }
-
-
 
 # Function to replace or create a file with a provided one
 replace_or_create_file() {
@@ -45,10 +42,12 @@ create_snmpd_conf() {
     echo "Creating /etc/snmp/snmpd.conf..."
     echo "Please enter the sysLocation:"
     read sysLocation
+    echo "Please enter the email:"
+    read sysContact
 
     # Create snmpd.conf in the config directory
     sudo tee "config/snmpd.conf" > /dev/null <<EOT
-sysContact <Your Contact Information>
+sysContact $sysContact
 sysLocation $sysLocation
 sysServices 72
 master agentx
@@ -61,8 +60,8 @@ includeDir /etc/snmp/snmp.conf.d
 EOT
 
     # Move snmpd.conf to /etc/snmp directory
-    sudo mv "config/snmpd.conf" "/etc/snmp/"
-    
+    sudo mv config/snmpd.conf "/etc/snmp/" || { echo "Failed to move snmpd.conf to /etc/snmp/"; exit 1; }
+
     # Add extend directive for ups-status.sh
     echo "Adding extend directive for ups-status.sh..."
     sudo upsc ups@localhost | sed 's/^\(.*\): .*$/extend \1 \/usr\/local\/bin\/ups-status.sh \1/' >> "/etc/snmp/snmpd.conf"
