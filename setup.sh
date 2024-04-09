@@ -16,15 +16,7 @@ install_requirements() {
     fi
 }
 
-# Function to edit /etc/nut/ups.conf
-edit_ups_conf() {
-    sudo tee -a /etc/nut/ups.conf > /dev/null <<EOT
-[ups]
-    driver = "usbhid-ups"
-    port = "auto"
-    product = "Eaton 5E"
-EOT
-}
+
 
 # Function to replace or create a file with a provided one
 replace_or_create_file() {
@@ -54,7 +46,7 @@ create_snmpd_conf() {
     echo "Please enter the sysLocation:"
     read sysLocation
 
-    sudo tee /etc/snmp/snmpd.conf > /dev/null <<EOT
+    sudo tee "config/snmpd.conf" > /dev/null <<EOT
 sysContact <Your Contact Information>
 sysLocation $sysLocation
 sysServices 72
@@ -106,10 +98,6 @@ sudo usermod -aG sudo localadmin
 echo "Installing required services..."
 install_requirements
 
-# Edit /etc/nut/ups.conf
-echo "Editing /etc/nut/ups.conf..."
-edit_ups_conf
-
 # Replace or create other files with provided ones
 replace_or_create_file "config/upsmon.conf" "/etc/nut/upsmon.conf"
 replace_or_create_file "config/upsd.conf" "/etc/nut/upsd.conf"
@@ -117,6 +105,7 @@ replace_or_create_file "config/nut.conf" "/etc/nut/nut.conf"
 replace_or_create_file "config/upsd.users" "/etc/nut/upsd.users"
 replace_or_create_file "config/ups-nut.sh" "/etc/snmp/ups-nut.sh"
 replace_or_create_file "config/ups-status.sh" "/usr/local/bin/ups-nut.sh"
+replace_or_create_file "config/snmpd.conf" "/etc/snmp/snmpd.conf"
 
 # Make sh executable
 make_executable "/etc/snmp/ups-nut.sh"
