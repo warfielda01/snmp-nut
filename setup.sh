@@ -116,18 +116,14 @@ replace_or_create_file "config/upsd.conf" "/etc/nut/upsd.conf"
 replace_or_create_file "config/nut.conf" "/etc/nut/nut.conf"
 replace_or_create_file "config/upsd.users" "/etc/nut/upsd.users"
 replace_or_create_file "config/ups-nut.sh" "/etc/snmp/ups-nut.sh"
+replace_or_create_file "config/ups-status.sh" "/usr/local/bin/ups-nut.sh"
 
-# Make ups-nut.sh executable
+# Make sh executable
 make_executable "/etc/snmp/ups-nut.sh"
-
-# Make ups-status.sh executable
 make_executable "/usr/local/bin/ups-status.sh"
 
 # Push ups_status.sh to /usr/local/bin/ups-status.sh
 push_ups_status
-
-# Make ups-status.sh executable
-make_executable "/usr/local/bin/ups-status.sh"
 
 # Create /etc/snmp/snmpd.conf and add extend directive
 create_snmpd_conf
