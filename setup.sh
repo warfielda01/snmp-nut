@@ -95,6 +95,9 @@ sudo usermod -aG sudo localadmin
 echo "Installing required services..."
 install_requirements
 
+# Create /etc/snmp/snmpd.conf and add extend directive
+create_snmpd_conf
+
 # Replace or create other files with provided ones
 replace_or_create_file "config/upsmon.conf" "/etc/nut/upsmon.conf"
 replace_or_create_file "config/upsd.conf" "/etc/nut/upsd.conf"
@@ -110,9 +113,6 @@ make_executable "/usr/local/bin/ups-status.sh"
 
 # Push ups_status.sh to /usr/local/bin/ups-status.sh
 push_ups_status
-
-# Create /etc/snmp/snmpd.conf and add extend directive
-create_snmpd_conf
 
 # Start and enable nut-server service
 start_and_enable_services
