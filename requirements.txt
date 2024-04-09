@@ -1,0 +1,5 @@
+nut
+nut-client
+snmp
+snmpd
+snmp-mibs-downloader
