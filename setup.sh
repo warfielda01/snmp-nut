@@ -26,14 +26,14 @@ edit_ups_conf() {
 EOT
 }
 
-# Function to replace a file with a provided one
-replace_file() {
-    if [ -f "$1" ]; then
+# Function to replace or create a file with a provided one
+replace_or_create_file() {
+    if [ -f "$2" ]; then
         echo "Replacing $2 with provided file..."
         sudo cp "$1" "$2"
     else
-        echo "Error: Provided $2 file not found."
-        exit 1
+        echo "Creating $2 with provided file..."
+        sudo cp "$1" "$2"
     fi
 }
 
@@ -66,6 +66,29 @@ extend ups-nut /etc/snmp/ups-nut.sh
 rouser authPrivUser authpriv -V systemonly
 includeDir /etc/snmp/snmp.conf.d
 EOT
+
+    # Add extend directive for ups-status.sh
+    echo "Adding extend directive for ups-status.sh..."
+    sudo upsc ups@localhost | sed 's/^\(.*\): .*$/extend \1 \/usr\/local\/bin\/ups-status.sh \1/' >> /etc/snmp/snmpd.conf
+}
+
+# Function to push ups_status.sh to /usr/local/bin/ups-status.sh
+push_ups_status() {
+    echo "Pushing ups_status.sh to /usr/local/bin/ups-status.sh..."
+    sudo cp "ups_status.sh" "/usr/local/bin/ups-status.sh"
+}
+
+# Function to start and enable nut-server service
+start_and_enable_services() {
+    echo "Starting nut-server service..."
+    sudo service nut-server start
+
+    echo "Starting snmpd service..."
+    sudo service snmpd start
+
+    echo "Enabling nut-server and snmpd services to start on boot..."
+    sudo systemctl enable nut-server.service
+    sudo systemctl enable snmpd.service
 }
 
 # Create a user called localadmin with a random password
@@ -87,17 +110,29 @@ install_requirements
 echo "Editing /etc/nut/ups.conf..."
 edit_ups_conf
 
-# Replace other files with provided ones
-replace_file "/config/upsmon.conf" "/etc/nut/upsmon.conf"
-replace_file "/config/upsd.conf" "/etc/nut/upsd.conf"
-replace_file "/config/nut.conf" "/etc/nut/nut.conf"
-replace_file "/config/upsd.users" "/etc/nut/upsd.users"
-replace_file "/config/ups-nut.sh" "/etc/snmp/ups-nut.sh"
+# Replace or create other files with provided ones
+replace_or_create_file "/config/upsmon.conf" "/etc/nut/upsmon.conf"
+replace_or_create_file "/config/upsd.conf" "/etc/nut/upsd.conf"
+replace_or_create_file "/config/nut.conf" "/etc/nut/nut.conf"
+replace_or_create_file "/config/upsd.users" "/etc/nut/upsd.users"
+replace_or_create_file "/config/ups-nut.sh" "/etc/snmp/ups-nut.sh"
 
 # Make ups-nut.sh executable
 make_executable "/etc/snmp/ups-nut.sh"
 
-# Create /etc/snmp/snmpd.conf
+# Make ups-status.sh executable
+make_executable "/usr/local/bin/ups-status.sh"
+
+# Push ups_status.sh to /usr/local/bin/ups-status.sh
+push_ups_status
+
+# Make ups-status.sh executable
+make_executable "/usr/local/bin/ups-status.sh"
+
+# Create /etc/snmp/snmpd.conf and add extend directive
 create_snmpd_conf
+
+# Start and enable nut-server service
+start_and_enable_services
 
 echo "Setup completed successfully."
