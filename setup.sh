@@ -59,12 +59,9 @@ rouser authPrivUser authpriv -V systemonly
 includeDir /etc/snmp/snmp.conf.d
 EOT
 
-    # Move snmpd.conf to /etc/snmp directory
-    sudo mv config/snmpd.conf "/etc/snmp/" || { echo "Failed to move snmpd.conf to /etc/snmp/"; exit 1; }
-
-    # Add extend directive for ups-status.sh
-    echo "Adding extend directive for ups-status.sh..."
-    sudo upsc ups@localhost | sed 's/^\(.*\): .*$/extend \1 \/usr\/local\/bin\/ups-status.sh \1/' >> "/etc/snmp/snmpd.conf"
+    # Add extend directive for ups-status.sh - dont know this is needed
+    #echo "Adding extend directive for ups-status.sh..."
+    #sudo upsc ups@localhost | sed 's/^\(.*\): .*$/extend \1 \/usr\/local\/bin\/ups-status.sh \1/' >> "/etc/snmp/snmpd.conf"
 }
 
 # Function to start and enable nut-server service
