@@ -46,6 +46,7 @@ create_snmpd_conf() {
     echo "Please enter the sysLocation:"
     read sysLocation
 
+    # Create snmpd.conf in the config directory
     sudo tee "config/snmpd.conf" > /dev/null <<EOT
 sysContact <Your Contact Information>
 sysLocation $sysLocation
@@ -59,15 +60,12 @@ rouser authPrivUser authpriv -V systemonly
 includeDir /etc/snmp/snmp.conf.d
 EOT
 
+    # Move snmpd.conf to /etc/snmp directory
+    sudo mv "config/snmpd.conf" "/etc/snmp/"
+    
     # Add extend directive for ups-status.sh
     echo "Adding extend directive for ups-status.sh..."
-    sudo upsc ups@localhost | sed 's/^\(.*\): .*$/extend \1 \/usr\/local\/bin\/ups-status.sh \1/' >> /etc/snmp/snmpd.conf
-}
-
-# Function to push ups_status.sh to /usr/local/bin/ups-status.sh
-push_ups_status() {
-    echo "Pushing ups_status.sh to /usr/local/bin/ups-status.sh..."
-    sudo cp "ups_status.sh" "/usr/local/bin/ups-status.sh"
+    sudo upsc ups@localhost | sed 's/^\(.*\): .*$/extend \1 \/usr\/local\/bin\/ups-status.sh \1/' >> "/etc/snmp/snmpd.conf"
 }
 
 # Function to start and enable nut-server service
