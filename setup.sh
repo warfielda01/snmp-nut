@@ -88,11 +88,11 @@ echo "Editing /etc/nut/ups.conf..."
 edit_ups_conf
 
 # Replace other files with provided ones
-replace_file "/path/to/your/upsmon.conf" "/etc/nut/upsmon.conf"
-replace_file "/path/to/your/upsd.conf" "/etc/nut/upsd.conf"
-replace_file "/path/to/your/nut.conf" "/etc/nut/nut.conf"
-replace_file "/path/to/your/upsd.users" "/etc/nut/upsd.users"
-replace_file "/path/to/your/ups-nut.sh" "/etc/snmp/ups-nut.sh"
+replace_file "/config/upsmon.conf" "/etc/nut/upsmon.conf"
+replace_file "/config/upsd.conf" "/etc/nut/upsd.conf"
+replace_file "/config/nut.conf" "/etc/nut/nut.conf"
+replace_file "/config/upsd.users" "/etc/nut/upsd.users"
+replace_file "/config/ups-nut.sh" "/etc/snmp/ups-nut.sh"
 
 # Make ups-nut.sh executable
 make_executable "/etc/snmp/ups-nut.sh"
