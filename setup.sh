@@ -68,13 +68,14 @@ EOT
 start_and_enable_services() {
     echo "Starting nut-server service..."
     sudo service nut-server start
-
+    sudo systemctl enable nut-server
     echo "Starting snmpd service..."
     sudo service snmpd start
+    sudo systemctl enable snmpd
 
     echo "Enabling nut-server and snmpd services to start on boot..."
-    sudo systemctl enable nut-server.service
-    sudo systemctl enable snmpd.service
+    #sudo systemctl enable nut-server.service
+    #sudo systemctl enable snmpd.service
 }
 
 # Create a user called localadmin with a random password
