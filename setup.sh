@@ -103,6 +103,7 @@ replace_or_create_file "config/upsd.users" "/etc/nut/upsd.users"
 replace_or_create_file "config/ups-nut.sh" "/etc/snmp/ups-nut.sh"
 replace_or_create_file "config/ups-status.sh" "/usr/local/bin/ups-nut.sh"
 replace_or_create_file "config/snmpd.conf" "/etc/snmp/snmpd.conf"
+replace_or_create_file "config/ups-status.sh" "/usr/local/bin/ups-status.sh"
 
 # Make sh executable
 make_executable "/etc/snmp/ups-nut.sh"
