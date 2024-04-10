@@ -44,6 +44,10 @@ create_snmpd_conf() {
     read sysLocation
     echo "Please enter the email:"
     read sysContact
+    # Set the system name (hostname)
+    echo "Please enter the computer name:"
+    read computerName
+    sudo hostnamectl set-hostname "$computerName"
 
     # Create snmpd.conf in the config directory
     sudo tee "config/snmpd.conf" > /dev/null <<EOT
