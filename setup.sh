@@ -1,133 +1,166 @@
 #!/bin/bash
 
-# Define colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Check if config file exists
+CONFIG_FILE="nut_zabbix.config"
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Configuration file $CONFIG_FILE not found!"
+    cp nut_zabbix.config.example nut_zabbix.config
+    echo "Copied the example file. Please modify nut_zabbix.conf"
+    exit 1
+fi
 
-# Function to generate a random password
-generate_password() {
-    tr -dc A-Za-z0-9 </dev/urandom | head -c 15 ; echo ''
-}
+# Source the configuration file
+source "$CONFIG_FILE"
 
-# Function to install required packages from requirements.txt
-install_requirements() {
-    if [ -f "requirements.txt" ]; then
-        echo -e "${YELLOW}Installing required packages...${NC}"
-        sudo apt install $(cat requirements.txt)
-    else
-        echo -e "${RED}Error: requirements.txt not found.${NC}"
-        exit 1
-    fi
-}
+# Update and upgrade the system
+sudo apt update && sudo apt upgrade -y
 
-# Function to replace or create a file with a provided one
-replace_or_create_file() {
-    if [ -f "$2" ]; then
-        echo -e "${YELLOW}Replacing $2 with provided file...${NC}"
-        sudo cp "$1" "$2"
-    else
-        echo -e "${YELLOW}Creating $2 with provided file...${NC}"
-        sudo cp "$1" "$2"
-    fi
-}
+# Install NUT and its dependencies
+sudo apt install -y nut
 
-# Function to make a script executable
-make_executable() {
-    if [ -f "$1" ]; then
-        echo -e "${YELLOW}Making $1 executable...${NC}"
-        sudo chmod +x "$1"
-    else
-        echo -e "${RED}Error: $1 not found.${NC}"
-        exit 1
-    fi
-}
+# Install Zabbix agent
+sudo apt install -y zabbix-agent
 
-# Function to create /etc/snmp/snmpd.conf
-create_snmpd_conf() {
-    echo -e "${YELLOW}Creating /etc/snmp/snmpd.conf...${NC}"
-    echo -e "${YELLOW}Please enter the sysLocation:${NC}"
-    read sysLocation
-    echo -e "${YELLOW}Please enter the email:${NC}"
-    read sysContact
+# Install SNMP
+sudo apt install -y snmp snmpd
 
-    # Set the system name (hostname)
-    echo -e "${YELLOW}Please enter the computer name:${NC}"
-    read computerName
-    sudo hostnamectl set-hostname "$computerName"
+# Configure NUT
+sudo tee /etc/nut/nut.conf > /dev/null << EOL
+MODE=standalone
+EOL
 
-    # Create snmpd.conf in the config directory
-    sudo tee "config/snmpd.conf" > /dev/null <<EOT
-sysContact $sysContact
-sysLocation $sysLocation
+sudo tee /etc/nut/ups.conf > /dev/null << EOL
+[$UPS_NAME]
+    driver = $UPS_DRIVER
+    port = $UPS_PORT
+    desc = "$UPS_DESC"
+EOL
+
+sudo tee /etc/nut/upsd.conf > /dev/null << EOL
+LISTEN 127.0.0.1 3493
+EOL
+
+sudo tee /etc/nut/upsd.users > /dev/null << EOL
+[$NUT_USERNAME]
+    password = $NUT_PASSWORD
+    upsmon master
+EOL
+
+sudo tee /etc/nut/upsmon.conf > /dev/null << EOL
+MONITOR $UPS_NAME@localhost 1 $NUT_USERNAME $NUT_PASSWORD master
+EOL
+
+# Set correct permissions
+sudo chmod 640 /etc/nut/*.conf
+sudo chown root:nut /etc/nut/*.conf
+
+# Start NUT services
+sudo systemctl enable nut-server nut-monitor
+sudo systemctl start nut-server nut-monitor
+
+# Configure Zabbix agent
+sudo sed -i "s/^Hostname=.*/Hostname=$HOSTNAME/" $ZABBIX_AGENT_CONF
+sudo sed -i "s/^Server=.*/Server=$ZABBIX_SERVER_IP/" $ZABBIX_AGENT_CONF
+sudo sed -i "s/^ServerActive=.*/ServerActive=$ZABBIX_SERVER_ACTIVE/" $ZABBIX_AGENT_CONF
+sudo sed -i "s/^ListenPort=.*/ListenPort=$ZABBIX_LISTEN_PORT/" $ZABBIX_AGENT_CONF
+sudo sed -i "s/^ListenIP=.*/ListenIP=$ZABBIX_LISTEN_IP/" $ZABBIX_AGENT_CONF
+sudo sed -i "s/^# HostMetadata=.*/HostMetadata=$ZABBIX_META_DATA/" $ZABBIX_AGENT_CONF
+
+# Configure TLS settings if provided
+if [ ! -z "$ZABBIX_TLS_CONNECT" ]; then
+    sudo sed -i "s/^# TLSConnect=.*/TLSConnect=$ZABBIX_TLS_CONNECT/" $ZABBIX_AGENT_CONF
+    sudo sed -i "s/^# TLSAccept=.*/TLSAccept=$ZABBIX_TLS_ACCEPT/" $ZABBIX_AGENT_CONF
+    sudo sed -i "s/^# TLSPSKIdentity=.*/TLSPSKIdentity=$ZABBIX_TLS_PSK_IDENTITY/" $ZABBIX_AGENT_CONF
+    sudo sed -i "s|^# TLSPSKFile=.*|TLSPSKFile=$ZABBIX_TLS_PSK_FILE|" $ZABBIX_AGENT_CONF
+fi
+
+# Configure Zabbix agent for NUT monitoring
+echo "" | sudo tee -a $ZABBIX_AGENT_CONF > /dev/null
+echo "# NUT monitoring" | sudo tee -a $ZABBIX_AGENT_CONF > /dev/null
+for param in "${UPS_PARAMS[@]}"; do
+    echo "UserParameter=$param,/bin/upsc $UPS_NAME@localhost $param" | sudo tee -a $ZABBIX_AGENT_CONF > /dev/null
+done
+
+# Configure SNMP
+sudo cp /etc/snmp/snmpd.conf /etc/snmp/snmpd.conf.bak
+sudo tee /etc/snmp/snmpd.conf > /dev/null << EOL
+# Listen on all interfaces
+agentAddress udp:161,udp6:[::1]:161
+
+# Configure access control
+rocommunity $SNMP_COMMUNITY default
+rocommunity6 $SNMP_COMMUNITY default
+
+# System information
+sysLocation $SNMP_LOCATION
+sysContact $SNMP_CONTACT
 sysServices 72
-master agentx
-view systemonly included .1.3.6.1.2.1.1
-view systemonly included .1.3.6.1.2.1.25.1
-rocommunity public
-extend ups-nut /etc/snmp/ups-nut.sh
-rouser authPrivUser authpriv -V systemonly
-includeDir /etc/snmp/snmp.conf.d
-EOT
 
-    # Move snmpd.conf to /etc/snmp directory
-    sudo mv "config/snmpd.conf" "/etc/snmp/" || { echo -e "${RED}Failed to move snmpd.conf to /etc/snmp/${NC}"; exit 1; }
+# Include additional configurations
+includeDir /etc/snmp/snmpd.conf.d
 
-    # Add extend directive for ups-status.sh
-    #echo -e "${YELLOW}Adding extend directive for ups-status.sh...${NC}"
-    #sudo upsc ups@localhost | sed 's/^\(.*\): .*$/extend \1 \/usr\/local\/bin\/ups-status.sh \1/' >> "/etc/snmp/snmpd.conf"
-}
+# Enable verbose logging for debugging
+verbose
+log_daemon
+logging enabled
 
-# Function to start and enable nut-server service
-start_and_enable_services() {
-    echo -e "${YELLOW}Starting nut-server service...${NC}"
-    sudo service nut-server start
-    sudo systemctl enable nut-server
+# NUT monitoring
+EOL
 
-    echo -e "${YELLOW}Starting snmpd service...${NC}"
-    sudo service snmpd start
-    sudo systemctl enable snmpd
+# Add NUT monitoring to SNMP (preventing duplicates)
+for param in "${UPS_PARAMS[@]}"; do
+    if ! grep -q "extend $param" /etc/snmp/snmpd.conf; then
+        echo "extend $param /bin/bash -c '/bin/upsc $UPS_NAME@localhost $param'" | sudo tee -a /etc/snmp/snmpd.conf > /dev/null
+    fi
+done
 
-    echo -e "${GREEN}Services enabled to start on boot.${NC}"
-}
+# Create new admin user if specified
+if [ "$CREATE_ADMIN_USER" = "true" ]; then
+    echo "Creating new admin user: $NEW_ADMIN_USERNAME"
+    sudo useradd -m -s /bin/bash $NEW_ADMIN_USERNAME
+    echo "$NEW_ADMIN_USERNAME:$NEW_ADMIN_PASSWORD" | sudo chpasswd
+    sudo usermod -aG sudo $NEW_ADMIN_USERNAME
+fi
 
-# Create a user called localadmin with a random password
-echo -e "${YELLOW}Creating user 'localadmin'...${NC}"
-password=$(generate_password)
-sudo useradd -m -s /bin/bash localadmin
-echo -e "${YELLOW}Setting password for 'localadmin' to: $password${NC}"
-echo "localadmin:$password" | sudo chpasswd
+# Reset Pi user password if specified
+if [ "$RESET_PI_PASSWORD" = "true" ]; then
+    echo "Resetting password for $PI_USER user"
+    echo "$PI_USER:$NEW_ADMIN_PASSWORD" | sudo chpasswd
+fi
 
-# Add 'localadmin' to the sudo group
-echo -e "${YELLOW}Adding 'localadmin' to the sudo group...${NC}"
-sudo usermod -aG sudo localadmin
+# Restart services
+sudo systemctl restart zabbix-agent
+sudo systemctl restart snmpd
 
-# Install required services from requirements.txt
-install_requirements
+# Wait for SNMP to start
+sleep 5
 
-# Create /etc/snmp/snmpd.conf and add extend directive
-create_snmpd_conf
+# Test SNMP configuration
+echo "Testing SNMP configuration..."
+snmpwalk -v2c -c $SNMP_COMMUNITY localhost > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+    echo "SNMP is working locally."
+else
+    echo "Error: SNMP is not working locally. Check the configuration and logs."
+fi
 
-# Replace or create other files with provided ones
-replace_or_create_file "config/upsmon.conf" "/etc/nut/upsmon.conf"
-replace_or_create_file "config/upsd.conf" "/etc/nut/upsd.conf"
-replace_or_create_file "config/nut.conf" "/etc/nut/nut.conf"
-replace_or_create_file "config/upsd.users" "/etc/nut/upsd.users"
-replace_or_create_file "config/ups-nut.sh" "/etc/snmp/ups-nut.sh"
-replace_or_create_file "config/ups-status.sh" "/usr/local/bin/ups-nut.sh"
-replace_or_create_file "config/snmpd.conf" "/etc/snmp/snmpd.conf"
-replace_or_create_file "config/ups-status.sh" "/usr/local/bin/ups-status.sh"
+# Check if SNMP is listening on all interfaces
+netstat -ulnp | grep snmpd
 
-# Make sh executable
-make_executable "/etc/snmp/ups-nut.sh"
-make_executable "/usr/local/bin/ups-status.sh"
+# Display SNMP logs
+echo "Recent SNMP logs:"
+sudo tail -n 20 /var/log/syslog | grep snmpd
 
-# Push ups_status.sh to /usr/local/bin/ups-status.sh
-push_ups_status
-
-# Start and enable nut-server service
-start_and_enable_services
-
-echo -e "${GREEN}Setup completed successfully.${NC}"
-
+echo "NUT, Zabbix agent, and SNMP have been installed and configured."
+echo "Hostname set to: $HOSTNAME"
+echo "NUT username set to: $NUT_USERNAME"
+echo "Zabbix agent configured to connect to server at: $ZABBIX_SERVER_IP"
+echo "SNMP community string set to: $SNMP_COMMUNITY"
+if [ "$CREATE_ADMIN_USER" = "true" ]; then
+    echo "New admin user created: $NEW_ADMIN_USERNAME"
+fi
+if [ "$RESET_PI_PASSWORD" = "true" ]; then
+    echo "Password reset for $PI_USER user"
+fi
+echo "Please update the Zabbix server and your SNMP monitoring system to start monitoring your UPS."
+echo "If you're still having issues, please check the logs and ensure your firewall allows incoming connections on UDP port 161."
