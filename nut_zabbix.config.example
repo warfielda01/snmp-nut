@@ -1,0 +1,49 @@
+# NUT and Zabbix Configuration
+
+# Hostname for this device
+HOSTNAME="UPS01"
+CREATE_ADMIN_USER="true"  # Set to "false" to skip creating a new admin user
+NEW_ADMIN_USERNAME="upsadmin"
+NEW_ADMIN_PASSWORD="St40ngAdm!nP@ss"
+
+# Reset Pi User Password
+RESET_PI_PASSWORD="true"  # Set to "true" to reset the pi user's password
+PI_USER="orangepi"  # Change this to "orangepi" if using Orange Pi
+
+
+# NUT Configuration
+NUT_USERNAME="nut_admin"
+NUT_PASSWORD="My_Nutty_P$zzLord"
+UPS_NAME="usb_ups"
+UPS_DRIVER="usbhid-ups"
+UPS_PORT="auto"
+UPS_DESC="USB UPS"
+
+# Zabbix Agent Configuration
+ZABBIX_AGENT_CONF="/etc/zabbix/zabbix_agent2.conf"
+ZABBIX_SERVER_IP="127.0.0.1"  # Change this to your Zabbix server IP
+ZABBIX_SERVER_ACTIVE="127.0.0.1"  # Change this if using active checks
+ZABBIX_LISTEN_PORT=10050
+ZABBIX_LISTEN_IP="0.0.0.0"  # Listen on all interfaces; adjust as needed
+ZABBIX_META_DATA="USB UPS"  # Optional metadata for this host
+
+# Zabbix Security Settings (uncomment and set these if using PSK encryption)
+# ZABBIX_TLS_CONNECT="psk"
+# ZABBIX_TLS_ACCEPT="psk"
+# ZABBIX_TLS_PSK_IDENTITY="PSK_ID_OF_THIS_AGENT"
+# ZABBIX_TLS_PSK_FILE="/etc/zabbix/zabbix_agentd.psk"
+
+# SNMP Configuration
+SNMP_COMMUNITY="public"  # Change this to your desired SNMP community string
+SNMP_LOCATION="Comms Rack 1"
+SNMP_CONTACT="noreply@example.com"
+
+# UPS Parameters to monitor
+UPS_PARAMS=(
+  "ups.status"
+  "ups.load"
+  "ups.realpower.nominal"
+  "ups.battery.charge"
+  "ups.battery.voltage"
+  "ups.input.voltage"
+)
