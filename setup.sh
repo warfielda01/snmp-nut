@@ -13,7 +13,9 @@ fi
 source "$CONFIG_FILE"
 
 # Update and upgrade the system
-sudo apt update && sudo apt upgrade -y
+sudo apt update
+sudo apt --fix-broken install
+sudo apt upgrade -y
 
 # Install NUT and its dependencies
 sudo apt install -y nut
