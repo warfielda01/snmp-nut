@@ -153,6 +153,9 @@ netstat -ulnp | grep snmpd
 echo "Recent SNMP logs:"
 sudo tail -n 20 /var/log/syslog | grep snmpd
 
+# Set the hostname
+sudo hostname $HOSTNAME
+
 echo "NUT, Zabbix agent, and SNMP have been installed and configured."
 echo "Hostname set to: $HOSTNAME"
 echo "NUT username set to: $NUT_USERNAME"
