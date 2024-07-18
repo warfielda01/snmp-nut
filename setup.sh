@@ -2,9 +2,12 @@
 
 # Colors
 RED='\033[0;31m'
+ORANGE='\033[0;33m'
+YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
+INDIGO='\033[0;35m'
+VIOLET='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Check if config file exists
@@ -179,16 +182,16 @@ echo -e "${BLUE}Setting the hostname...${NC}"
 # Set the hostname
 sudo hostnamectl set-hostname $HOSTNAME
 
-echo -e "${GREEN}NUT, Zabbix agent, and SNMP have been installed and configured.${NC}"
-echo -e "${GREEN}Hostname set to: $HOSTNAME${NC}"
-echo -e "${GREEN}NUT username set to: $NUT_USERNAME${NC}"
-echo -e "${GREEN}Zabbix agent configured to connect to server at: $ZABBIX_SERVER_IP${NC}"
-echo -e "${GREEN}SNMP community string set to: $SNMP_COMMUNITY${NC}"
+echo -e "${INDIGO}NUT, Zabbix agent, and SNMP have been installed and configured.${NC}"
+echo -e "${VIOLET}Hostname set to: $HOSTNAME${NC}"
+echo -e "${RED}NUT username set to: $NUT_USERNAME${NC}"
+echo -e "${ORANGE}Zabbix agent configured to connect to server at: $ZABBIX_SERVER_IP${NC}"
+echo -e "${YELLOW}SNMP community string set to: $SNMP_COMMUNITY${NC}"
 if [ "$CREATE_ADMIN_USER" = "true" ]; then
     echo -e "${GREEN}New admin user created: $NEW_ADMIN_USERNAME${NC}"
 fi
 if [ "$RESET_PI_PASSWORD" = "true" ]; then
-    echo -e "${GREEN}Password reset for $PI_USER user${NC}"
+    echo -e "${BLUE}Password reset for $PI_USER user${NC}"
 fi
-echo -e "${GREEN}Please update the Zabbix server and your SNMP monitoring system to start monitoring your UPS.${NC}"
-echo -e "${GREEN}If you're still having issues, please check the logs and ensure your firewall allows incoming connections on UDP port 161.${NC}"
+echo -e "${VIOLET}Please update the Zabbix server and your SNMP monitoring system to start monitoring your UPS.${NC}"
+echo -e "${INDIGO}If you're still having issues, please check the logs and ensure your firewall allows incoming connections on UDP port 161.${NC}"
