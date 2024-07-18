@@ -13,34 +13,34 @@ NC='\033[0m' # No Color
 # Check if config file exists
 CONFIG_FILE="nut_zabbix.config"
 if [ ! -f "$CONFIG_FILE" ]; then
-    echo -e "${RED}Configuration file $CONFIG_FILE not found!${NC}"
+    echo -e "${RED}C${ORANGE}o${YELLOW}n${GREEN}f${BLUE}i${INDIGO}g${VIOLET}u${RED}r${ORANGE}a${YELLOW}t${GREEN}i${BLUE}o${INDIGO}n${VIOLET} file $CONFIG_FILE not found!${NC}"
     cp nut_zabbix.config.example nut_zabbix.config
-    echo -e "${YELLOW}Copied the example file. Please modify nut_zabbix.conf${NC}"
+    echo -e "${YELLOW}C${GREEN}o${BLUE}p${INDIGO}i${VIOLET}e${RED}d the example file. Please modify nut_zabbix.conf${NC}"
     exit 1
 fi
 
 # Source the configuration file
 source "$CONFIG_FILE"
 
-echo -e "${BLUE}Updating and upgrading the system...${NC}"
+echo -e "${BLUE}U${INDIGO}p${VIOLET}d${RED}a${ORANGE}t${YELLOW}i${GREEN}n${BLUE}g and upgrading the system...${NC}"
 # Update and upgrade the system
 sudo apt update
 sudo apt --fix-broken install
 sudo apt upgrade -y
 
-echo -e "${BLUE}Installing NUT and its dependencies...${NC}"
+echo -e "${BLUE}I${INDIGO}n${VIOLET}s${RED}t${ORANGE}a${YELLOW}l${GREEN}l${BLUE}i${INDIGO}n${VIOLET}g NUT and its dependencies...${NC}"
 # Install NUT and its dependencies
 sudo apt install -y nut
 
-echo -e "${BLUE}Installing Zabbix agent...${NC}"
+echo -e "${BLUE}I${INDIGO}n${VIOLET}s${RED}t${ORANGE}a${YELLOW}l${GREEN}l${BLUE}i${INDIGO}n${VIOLET}g Zabbix agent...${NC}"
 # Install Zabbix agent
 sudo apt install -y zabbix-agent
 
-echo -e "${BLUE}Installing SNMP...${NC}"
+echo -e "${BLUE}I${INDIGO}n${VIOLET}s${RED}t${ORANGE}a${YELLOW}l${GREEN}l${BLUE}i${INDIGO}n${VIOLET}g SNMP...${NC}"
 # Install SNMP
 sudo apt install -y snmp snmpd
 
-echo -e "${BLUE}Configuring NUT...${NC}"
+echo -e "${BLUE}C${INDIGO}o${VIOLET}n${RED}f${ORANGE}i${YELLOW}g${GREEN}u${BLUE}r${INDIGO}i${VIOLET}n${RED}g NUT...${NC}"
 # Configure NUT
 sudo tee /etc/nut/nut.conf > /dev/null << EOL
 MODE=standalone
@@ -67,17 +67,17 @@ sudo tee /etc/nut/upsmon.conf > /dev/null << EOL
 MONITOR $UPS_NAME@localhost 1 $NUT_USERNAME $NUT_PASSWORD master
 EOL
 
-echo -e "${BLUE}Setting correct permissions...${NC}"
+echo -e "${BLUE}S${INDIGO}e${VIOLET}t${RED}t${ORANGE}i${YELLOW}n${GREEN}g correct permissions...${NC}"
 # Set correct permissions
 sudo chmod 640 /etc/nut/*.conf
 sudo chown root:nut /etc/nut/*.conf
 
-echo -e "${BLUE}Starting NUT services...${NC}"
+echo -e "${BLUE}S${INDIGO}t${VIOLET}a${RED}r${ORANGE}t${YELLOW}i${GREEN}n${BLUE}g NUT services...${NC}"
 # Start NUT services
 sudo systemctl enable nut-server nut-monitor
 sudo systemctl start nut-server nut-monitor
 
-echo -e "${BLUE}Configuring Zabbix agent...${NC}"
+echo -e "${BLUE}C${INDIGO}o${VIOLET}n${RED}f${ORANGE}i${YELLOW}g${GREEN}u${BLUE}r${INDIGO}i${VIOLET}n${RED}g Zabbix agent...${NC}"
 # Configure Zabbix agent
 sudo sed -i "s/^Hostname=.*/Hostname=$HOSTNAME/" $ZABBIX_AGENT_CONF
 sudo sed -i "s/^Server=.*/Server=$ZABBIX_SERVER_IP/" $ZABBIX_AGENT_CONF
@@ -86,7 +86,7 @@ sudo sed -i "s/^ListenPort=.*/ListenPort=$ZABBIX_LISTEN_PORT/" $ZABBIX_AGENT_CON
 sudo sed -i "s/^ListenIP=.*/ListenIP=$ZABBIX_LISTEN_IP/" $ZABBIX_AGENT_CONF
 sudo sed -i "s/^# HostMetadata=.*/HostMetadata=$ZABBIX_META_DATA/" $ZABBIX_AGENT_CONF
 
-echo -e "${BLUE}Configuring TLS settings if provided...${NC}"
+echo -e "${BLUE}C${INDIGO}o${VIOLET}n${RED}f${ORANGE}i${YELLOW}g${GREEN}u${BLUE}r${INDIGO}i${VIOLET}n${RED}g TLS settings if provided...${NC}"
 # Configure TLS settings if provided
 if [ ! -z "$ZABBIX_TLS_CONNECT" ]; then
     sudo sed -i "s/^# TLSConnect=.*/TLSConnect=$ZABBIX_TLS_CONNECT/" $ZABBIX_AGENT_CONF
@@ -95,7 +95,7 @@ if [ ! -z "$ZABBIX_TLS_CONNECT" ]; then
     sudo sed -i "s|^# TLSPSKFile=.*|TLSPSKFile=$ZABBIX_TLS_PSK_FILE|" $ZABBIX_AGENT_CONF
 fi
 
-echo -e "${BLUE}Configuring Zabbix agent for NUT monitoring...${NC}"
+echo -e "${BLUE}C${INDIGO}o${VIOLET}n${RED}f${ORANGE}i${YELLOW}g${GREEN}u${BLUE}r${INDIGO}i${VIOLET}n${RED}g Zabbix agent for NUT monitoring...${NC}"
 # Configure Zabbix agent for NUT monitoring
 echo "" | sudo tee -a $ZABBIX_AGENT_CONF > /dev/null
 echo "# NUT monitoring" | sudo tee -a $ZABBIX_AGENT_CONF > /dev/null
@@ -103,7 +103,7 @@ for param in "${UPS_PARAMS[@]}"; do
     echo "UserParameter=$param,/bin/upsc $UPS_NAME@localhost $param" | sudo tee -a $ZABBIX_AGENT_CONF > /dev/null
 done
 
-echo -e "${BLUE}Configuring SNMP...${NC}"
+echo -e "${BLUE}C${INDIGO}o${VIOLET}n${RED}f${ORANGE}i${YELLOW}g${GREEN}u${BLUE}r${INDIGO}i${VIOLET}n${RED}g SNMP...${NC}"
 # Configure SNMP
 sudo cp /etc/snmp/snmpd.conf /etc/snmp/snmpd.conf.bak
 sudo tee /etc/snmp/snmpd.conf > /dev/null << EOL
@@ -137,23 +137,23 @@ for param in "${UPS_PARAMS[@]}"; do
     fi
 done
 
-echo -e "${BLUE}Creating new admin user if specified...${NC}"
+echo -e "${BLUE}C${INDIGO}r${VIOLET}e${RED}a${ORANGE}t${YELLOW}i${GREEN}n${BLUE}g new admin user if specified...${NC}"
 # Create new admin user if specified
 if [ "$CREATE_ADMIN_USER" = "true" ]; then
-    echo -e "${YELLOW}Creating new admin user: $NEW_ADMIN_USERNAME${NC}"
+    echo -e "${YELLOW}C${GREEN}r${BLUE}e${INDIGO}a${VIOLET}t${RED}i${ORANGE}n${YELLOW}g new admin user: $NEW_ADMIN_USERNAME${NC}"
     sudo useradd -m -s /bin/bash $NEW_ADMIN_USERNAME
     echo "$NEW_ADMIN_USERNAME:$NEW_ADMIN_PASSWORD" | sudo chpasswd
     sudo usermod -aG sudo $NEW_ADMIN_USERNAME
 fi
 
-echo -e "${BLUE}Resetting Pi user password if specified...${NC}"
+echo -e "${BLUE}R${INDIGO}e${VIOLET}s${RED}e${ORANGE}t${YELLOW}t${GREEN}i${BLUE}n${INDIGO}g Pi user password if specified...${NC}"
 # Reset Pi user password if specified
 if [ "$RESET_PI_PASSWORD" = "true" ]; then
-    echo -e "${YELLOW}Resetting password for $PI_USER user${NC}"
+    echo -e "${YELLOW}R${GREEN}e${BLUE}s${INDIGO}e${VIOLET}t${RED}t${ORANGE}i${YELLOW}n${GREEN}g password for $PI_USER user${NC}"
     echo "$PI_USER:$NEW_ADMIN_PASSWORD" | sudo chpasswd
 fi
 
-echo -e "${BLUE}Restarting services...${NC}"
+echo -e "${BLUE}R${INDIGO}e${VIOLET}s${RED}t${ORANGE}a${YELLOW}r${GREEN}t${BLUE}i${INDIGO}n${VIOLET}g services...${NC}"
 # Restart services
 sudo systemctl restart zabbix-agent
 sudo systemctl restart snmpd
@@ -161,37 +161,37 @@ sudo systemctl restart snmpd
 # Wait for SNMP to start
 sleep 5
 
-echo -e "${BLUE}Testing SNMP configuration...${NC}"
+echo -e "${BLUE}T${INDIGO}e${VIOLET}s${RED}t${ORANGE}i${YELLOW}n${GREEN}g SNMP configuration...${NC}"
 # Test SNMP configuration
 snmpwalk -v2c -c $SNMP_COMMUNITY localhost > /dev/null 2>&1
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}SNMP is working locally.${NC}"
+    echo -e "${GREEN}S${BLUE}N${INDIGO}M${VIOLET}P is working locally.${NC}"
 else
-    echo -e "${RED}Error: SNMP is not working locally. Check the configuration and logs.${NC}"
+    echo -e "${RED}E${ORANGE}r${YELLOW}r${GREEN}o${BLUE}r: SNMP is not working locally. Check the configuration and logs.${NC}"
 fi
 
-echo -e "${BLUE}Checking if SNMP is listening on all interfaces...${NC}"
+echo -e "${BLUE}C${INDIGO}h${VIOLET}e${RED}c${ORANGE}k${YELLOW}i${GREEN}n${BLUE}g if SNMP is listening on all interfaces...${NC}"
 # Check if SNMP is listening on all interfaces
 netstat -ulnp | grep snmpd
 
 # Display SNMP logs
-echo -e "${BLUE}Recent SNMP logs:${NC}"
+echo -e "${BLUE}R${INDIGO}e${VIOLET}c${RED}e${ORANGE}n${YELLOW}t SNMP logs:${NC}"
 sudo tail -n 20 /var/log/syslog | grep snmpd
 
-echo -e "${BLUE}Setting the hostname...${NC}"
+echo -e "${BLUE}S${INDIGO}e${VIOLET}t${RED}t${ORANGE}i${YELLOW}n${GREEN}g the hostname...${NC}"
 # Set the hostname
 sudo hostnamectl set-hostname $HOSTNAME
 
-echo -e "${INDIGO}NUT, Zabbix agent, and SNMP have been installed and configured.${NC}"
-echo -e "${VIOLET}Hostname set to: $HOSTNAME${NC}"
-echo -e "${RED}NUT username set to: $NUT_USERNAME${NC}"
-echo -e "${ORANGE}Zabbix agent configured to connect to server at: $ZABBIX_SERVER_IP${NC}"
-echo -e "${YELLOW}SNMP community string set to: $SNMP_COMMUNITY${NC}"
+echo -e "${INDIGO}N${VIOLET}U${RED}T, Z${ORANGE}a${YELLOW}b${GREEN}b${BLUE}i${INDIGO}x agent, and SNMP have been installed and configured.${NC}"
+echo -e "${VIOLET}H${RED}o${ORANGE}s${YELLOW}t${GREEN}n${BLUE}a${INDIGO}m${VIOLET}e set to: $HOSTNAME${NC}"
+echo -e "${RED}N${ORANGE}U${YELLOW}T username set to: $NUT_USERNAME${NC}"
+echo -e "${ORANGE}Z${YELLOW}a${GREEN}b${BLUE}b${INDIGO}i${VIOLET}x agent configured to connect to server at: $ZABBIX_SERVER_IP${NC}"
+echo -e "${YELLOW}S${GREEN}N${BLUE}M${INDIGO}P community string set to: $SNMP_COMMUNITY${NC}"
 if [ "$CREATE_ADMIN_USER" = "true" ]; then
-    echo -e "${GREEN}New admin user created: $NEW_ADMIN_USERNAME${NC}"
+    echo -e "${GREEN}N${BLUE}e${INDIGO}w admin user created: $NEW_ADMIN_USERNAME${NC}"
 fi
 if [ "$RESET_PI_PASSWORD" = "true" ]; then
-    echo -e "${BLUE}Password reset for $PI_USER user${NC}"
+    echo -e "${BLUE}P${INDIGO}a${VIOLET}s${RED}s${ORANGE}w${YELLOW}o${GREEN}r${BLUE}d reset for $PI_USER user${NC}"
 fi
-echo -e "${VIOLET}Please update the Zabbix server and your SNMP monitoring system to start monitoring your UPS.${NC}"
-echo -e "${INDIGO}If you're still having issues, please check the logs and ensure your firewall allows incoming connections on UDP port 161.${NC}"
+echo -e "${VIOLET}P${RED}l${ORANGE}e${YELLOW}a${GREEN}s${BLUE}e update the Zabbix server and your SNMP monitoring system to start monitoring your UPS.${NC}"
+echo -e "${INDIGO}I${VIOLET}f you're still having issues, please check the logs and ensure your firewall allows incoming connections on UDP port 161.${NC}"
