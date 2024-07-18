@@ -6,7 +6,12 @@ This is an auto installer for nut and snmp. It should create a new admin user, a
 Setup instructions:
 
 git clone https://github.com/warfielda01/snmp-nut.git
+
 cd snmp-nut
+
+cp nut_zabbix.config.example nut_zabbix.config
+#### Modify the nut_zabbix.config now
+
 sudo ./setup.sh
 
 Reboot at the end to test. 
